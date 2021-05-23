@@ -52,4 +52,4 @@ class Vision:
             with self.lock:
                 self.targets = targets
             self.fps = round(1.0 / (time() - start), 1)
-            sleep(0.005)
+            sleep(0.01)

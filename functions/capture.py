@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import pygetwindow as pgw
 
 from threading import Lock, Thread
 from mss import mss
@@ -23,28 +24,18 @@ class WindowCapture:
     screen = mss()
     region = None
 
-    def __init__(self, border_pixels, titlebar_pixels):
+    def __init__(self, window_title, border_pixels, titlebar_pixels):
         self.lock = Lock()
-
-        window_rect = [0, 0, 0, 0]
-
-        data = os.popen('wmctrl -lG | grep "Lineage II"').read()
-        variables = data.split()
-        window_rect[0] = int(variables[2])
-        window_rect[1] = int(variables[3])
-        window_rect[2] = int(variables[4])
-        window_rect[3] = int(variables[5])
-
-        self.offset_x = window_rect[0]
-        self.offset_y = window_rect[1]
+        l2windows = pgw.getWindowsWithTitle(window_title)[0]
+        self.offset_x, self.offset_y = l2windows.topleft
 
         self.cropped_x = border_pixels + self.offset_x
         self.cropped_y = titlebar_pixels + self.offset_y
 
-        self.w = window_rect[2]
-        self.h = window_rect[3]
+        self.w = l2windows.width
+        self.h = l2windows.height
         self.region = {'top': self.offset_y, 'left': self.offset_x,
-                       'width': self.w - 50, 'height': self.h - 50}
+                       'width': self.w, 'height': self.h}
 
     def set_buff_bar_pos(self, buff_bar_pos):
         self.buff_bar_pos = buff_bar_pos

@@ -4,14 +4,11 @@ import curses
 import cv2 as cv
 import keyboard
 import os
+import pygetwindow as pgw
 
 from functions import *
 from time import sleep
 from time import time
-
-# Check to see what Operating System is being used. Delete these 2 lines if you want to try anyway.
-import platform
-assert ('Linux' in platform.system()), "The bot only works on Linux."
 
 # Set up config
 path = os.path.dirname(os.path.abspath(__file__)) + '/settings.ini'
@@ -19,6 +16,7 @@ Config = configparser.ConfigParser()
 Config.read(path)
 UI_info = Config.get('Settings', 'UI_info')
 titlebar = int(Config.get('Settings', 'Titlebar'))
+windowtitle = Config.get('Settings', 'Title')
 border = int(Config.get('Settings', 'Border'))
 to_village_offset = int(Config.get('Settings', 'To_village_offset'))
 seconds = int(Config.get('Settings', 'Seconds'))
@@ -42,7 +40,7 @@ DEBUG = args.DEBUG
 
 def main():
 
-    wincap = WindowCapture(border, titlebar)
+    wincap = WindowCapture(windowtitle, border, titlebar)
     wincap.start()
     while wincap.screenshot is None:
         sleep(0.01)
@@ -59,7 +57,7 @@ def main():
         screen = curses.initscr()
 
     fps = 1
-    while(True):
+    while not keyboard.is_pressed('q'):
 
         start = time()
         vision.screenshot = wincap.screenshot
@@ -67,8 +65,8 @@ def main():
 
         if not utils.solving_captcha:
             if bot.state == BotState.INITIALIZING:
-                os.system('xdotool windowactivate \
-                $(xdotool search --onlyvisible --name "Lineage II")')
+                l2windows = pgw.getWindowsWithTitle(windowtitle)[0]
+                l2windows.activate()
             elif bot.state == BotState.SEARCHING:
                 bot.update_targets(vision.targets)
                 bot.update_hp(utils.current_player_health, utils.current_enemy_health)
@@ -89,28 +87,21 @@ def main():
             for target in bot.targets:
                 cv.circle(screenshot, (int(target[0]), int(
                     target[1])), 15, (0, 255, 0), 2)
-            scale_percent = 60
+            scale_percent = 70
             width = int(screenshot.shape[1] * scale_percent / 100)
             height = int(screenshot.shape[0] * scale_percent / 100)
             dim = (width, height)
             font = cv.FONT_HERSHEY_SIMPLEX
             resized = cv.resize(screenshot, dim, interpolation=cv.INTER_LINEAR)
-            resized = cv.putText(resized, f"player health: {utils.current_player_health}%",
-                                 (210, height - 85), font, 1, (0, 255, 0), 2, cv.LINE_AA)
-            resized = cv.putText(resized, f"enemy health: {utils.current_enemy_health}%",
-                                 (210, height - 55), font, 1, (0, 255, 0), 2, cv.LINE_AA)
-            resized = cv.putText(resized, f"fps: {wincap.fps}",
-                                 (210, height - 25), font, 1, (0, 255, 0), 2, cv.LINE_AA)
-            cv.imshow('Matches', resized)
-            cv.moveWindow('Matches', (wincap.offset_x + wincap.w), 0)
+            resized = cv.putText(resized, f"Player HP: {utils.current_player_health}%",
+                                 (620, height - 85), font, 1, (0, 255, 0), 2, cv.LINE_AA)
+            resized = cv.putText(resized, f"Target HP: {utils.current_enemy_health}%",
+                                 (620, height - 55), font, 1, (0, 255, 0), 2, cv.LINE_AA)
+            resized = cv.putText(resized, f"FPS: {wincap.fps}",
+                                 (620, height - 25), font, 1, (0, 255, 0), 2, cv.LINE_AA)
+            cv.imshow('Hawkeyes', resized)
+            cv.moveWindow('Hawkeyes', 0, (wincap.offset_y + wincap.h))
             cv.waitKey(1)
-            if keyboard.is_pressed('q'):
-                cv.destroyAllWindows()
-                wincap.stop()
-                vision.stop()
-                bot.stop()
-                utils.stop()
-                break
 
         # output
         elif DEBUG is False:
@@ -123,23 +114,18 @@ def main():
             screen.addstr(f"utils   fps: {utils.fps}\n")
             screen.addstr(f"vision  fps: {vision.fps}\n")
             screen.refresh()
-            if keyboard.is_pressed('q'):
-                wincap.stop()
-                vision.stop()
-                bot.stop()
-                utils.stop()
-                curses.endwin()
-                break
 
-        elif DEBUG is None:
-            if keyboard.is_pressed('q'):
-                wincap.stop()
-                vision.stop()
-                bot.stop()
-                utils.stop()
-                break
         fps = round(1.0 / (time() - start), 1)
 
+    if DEBUG is True:
+        cv.destroyAllWindows()
+    elif DEBUG is False:
+        curses.endwin()
+
+    wincap.stop()
+    vision.stop()
+    bot.stop()
+    utils.stop()       
 
 if __name__ == "__main__":
     main()

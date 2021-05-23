@@ -15,8 +15,8 @@ from time import sleep, time
 class Utils:
 
     # settings
-    pytesseract.pytesseract.tesseract_cmd = r'/usr/bin/tesseract'
-    os.environ['TESSDATA_PREFIX'] = '/usr/share/tessdata'
+    pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
+
     # output
     player_health = 100
     enemy_health = 0
@@ -138,7 +138,7 @@ class Utils:
             pyautogui.click((self.w / 2 + self.offset_x),
                             (self.h / 2 + self.offset_y - self.to_village_offset))
             sleep(5)
-            keys.send('F11')
+            keys.send('F12')
             self.target("/target gatekeeper")
             self.target("/target gatekeeper")
             while not self.arrived_at_npc():
@@ -229,5 +229,5 @@ class Utils:
                 self.current_enemy_health = current_enemy_health
                 self.current_player_health = current_player_health
             # Need to cap the speed of it because it uses resources unnecessarily
-            self.fps = round(1.0 / (time() - start), 1)
+            self.fps = round(1.0 / (time() - start + 1), 1)
             sleep(0.005)

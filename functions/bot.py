@@ -12,6 +12,7 @@ class BotState:
     SEARCHING = 1
     ATTACKING = 2
     REBUFFING = 3
+    
 
 class BotActions:
 
@@ -134,20 +135,22 @@ class BotActions:
     def stop(self):
         self.stopped = True
         sleep(0.25)
-        keyboard.send('F12')
+        keyboard.send('7')
 
         # this is the main logic controller
     def run(self):
+        print(self.targets)
         while not self.stopped:
             if self.state == BotState.INITIALIZING:
                 sleep(self.init_seconds)
                 sleep(0.25)
-                keyboard.send('F12')
+                # keyboard.send('7')
                 with self.lock:
                     self.state = BotState.SEARCHING
 
             elif self.state == BotState.SEARCHING:
                 self.message = "Looking for enemies"
+                print(self.message)
                 if self.player_health == 0:
                     self.buffed = False
                     with self.lock:
@@ -156,7 +159,7 @@ class BotActions:
                     with self.lock:
                         self.state = BotState.ATTACKING
                 else:
-                    self.turn_camera(250)
+                    self.turn_camera(100)
 
             elif self.state == BotState.ATTACKING:
                 self.attack()
